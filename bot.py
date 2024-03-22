@@ -27,7 +27,16 @@ class Bot:
 
 		answer = await self.chats[sender.name].send_message(message)
 
-		return str(answer.text)
+		answer2 = None
+
+		if answer.text == None:
+			message_id = answer.uuid
+			while answer2 == None:
+				new_message = await self.chats[sender.name].another_response(message_id)
+				answer2 = new_message.text
+			else:
+				return answer2
+		return answer.text
 	
 	async def handle_message(self, message):
 		if message.author.id == self.client.user.id:
