@@ -57,7 +57,6 @@ class Bot:
 
 		if not message.channel.type is discord.ChannelType.private:
 			if self.client.user.mentioned_in(message) and not sender.bot:
-				regex = "<@!*&*[0-9]+>"
 				msg = re.sub(r'<@!*&*[0-9]+>', '', message.content).strip()
 
 				text = await self.ai_chat(sender, msg)
