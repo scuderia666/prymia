@@ -1,4 +1,5 @@
 import os
+import re
 import random
 import asyncio
 from omegaconf import OmegaConf
@@ -11,6 +12,16 @@ class Bot:
 	def __init__(self):
 		self.data = {}
 		self.chats = {}
+
+	async def send_bot_guild_message(self, guild, channel, message):
+		try:
+			await channel.send(message)
+		except discord.errors.Forbidden:
+			return
+		except discord.errors.CaptchaRequired:
+			return
+		except discord.errors.HTTPException as e:
+			return
 
 	async def ai_chat(self, sender, message):
 		if sender.name not in self.data.keys():
@@ -42,10 +53,16 @@ class Bot:
 		if message.author.id == self.client.user.id:
 			return
 
-		if not message.channel.type is discord.ChannelType.private:
-			return
-
 		sender = message.author
+
+		if not message.channel.type is discord.ChannelType.private:
+			if self.client.user.mentioned_in(message) and not sender.bot:
+				regex = "<@!*&*[0-9]+>"
+				msg = re.sub(r'<@!*&*[0-9]+>', '', message.content).strip()
+
+				text = await self.ai_chat(sender, msg)
+				await self.send_bot_guild_message(message.guild, message.channel, str(sender.mention) + " " + text)
+			return
 
 		if not sender.bot:
 			await message.channel.send(await self.ai_chat(sender, message.content))
@@ -65,6 +82,9 @@ class Bot:
 
 		self.cai_client = Client()
 		await self.cai_client.authenticate_with_token(os.getenv('CAI_TOKEN'))
+
+		if not os.path.exists("data/" + self.name + ".yml"):
+			self.save_data()
 
 		self.data = OmegaConf.load("data/" + self.name + ".yml")
 
