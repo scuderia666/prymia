@@ -1,7 +1,6 @@
 import os
 import signal
 import asyncio
-import functools
 
 from bot import Bot
 from omegaconf import OmegaConf
@@ -28,8 +27,6 @@ async def main():
 	load_profiles()
 
 	loop = asyncio.get_running_loop()
-	loop.add_signal_handler(signal.SIGHUP, functools.partial(shutdown, loop))
-	loop.add_signal_handler(signal.SIGTERM, functools.partial(shutdown, loop))
 
 	for name, data in profiles.items():
 		bots[name] = Bot()
@@ -38,7 +35,7 @@ async def main():
 	try:
 		loop.run_forever()
 	except KeyboardInterrupt:
-		print("Process interrupted")
+		pass
 	finally:
 		for name, bot in bots.items():
 			bot.save_data()

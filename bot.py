@@ -135,6 +135,7 @@ class Bot:
 					return
 
 				await self.client.send_friend_request(target)
+				await self.broadcast("[system] <" + sender.name + "> friend request has been successfully sent to " + target.name)
 
 			if cmd == "msg":
 				if len(args) < 1:
