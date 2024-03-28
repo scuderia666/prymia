@@ -11,6 +11,7 @@ class Bot:
 
 	def __init__(self):
 		self.data = {}
+		self.sessions = {}
 		self.chats = {}
 
 	async def send_bot_guild_message(self, guild, channel, message):
@@ -48,12 +49,33 @@ class Bot:
 			else:
 				return answer2
 		return answer.text
-	
+
+	async def fetch_user(self, id):
+		try:
+			return await self.client.fetch_user(id)
+		except discord.errors.NotFound:
+			return discord.errors.NotFound
+
+	async def info(self, target, message):
+		await target.send("[info] " + message)
+
+	async def error(self, target, message):
+		await target.send("[error] " + message)
+
+	async def broadcast(self, message, exception = None):
+		for name, user in self.sessions.items():
+			if exception is not None and name == exception:
+				continue
+			await user.send(message)
+		
 	async def handle_message(self, message):
 		if message.author.id == self.client.user.id:
 			return
 
 		sender = message.author
+
+		if sender.bot:
+			return
 
 		if not message.channel.type is discord.ChannelType.private:
 			if self.client.user.mentioned_in(message) and not sender.bot:
@@ -63,7 +85,89 @@ class Bot:
 				await self.send_bot_guild_message(message.guild, message.channel, str(sender.mention) + " " + text)
 			return
 
-		if not sender.bot:
+		if message.content[:1] == "!":
+			content = message.content[1:].split(None, 1)
+			cmd = content[0]
+
+			args = []
+
+			if len(content) == 2:
+				args = content[1].split()
+
+			if cmd == "login":
+				if sender.name in self.sessions.keys():
+					await self.error(sender, "you are already logged in.")
+					return
+
+				if len(args) < 1:
+					await self.error(sender, "please provide a password.")
+					return
+
+				if args[0] == str(self.pin):
+					self.sessions[sender.name] = sender
+
+					await self.info(sender, "logged in successfully")
+					await self.broadcast("[system] " + sender.name + " has logged in", sender.name)
+				else:
+					await self.error(sender, "wrong password")
+			elif sender.name not in self.sessions.keys():
+				await self.error(sender, "you are not logged in. please use !login <password> to login.")
+				return
+
+			if cmd == "logout":
+				if sender.name not in self.sessions.keys():
+					await self.error(sender, "you are not logged in.")
+					return
+
+				self.sessions.pop(sender.name)
+	
+				await self.info(sender, "you are successfully logged out")
+				await self.broadcast("[system] " + sender.name + " has logged out", sender.name)
+
+			if cmd == "frq":
+				if len(args) < 1:
+					await self.error(sender, "specify an id")
+					return
+
+				id = int(args[0])
+				target = await self.fetch_user(id)
+				if target == None:
+					return
+
+				await self.client.send_friend_request(target)
+
+			if cmd == "msg":
+				if len(args) < 1:
+					await self.error(sender, "specify an id")
+					return
+
+				if len(args) < 2:
+					await self.error(sender, "specify a message")
+					return
+
+				id = int(args[0])
+				target = await self.fetch_user(id)
+				if target == None:
+					return
+
+				await target.send(args[1])
+
+			if cmd == "say":
+				if len(args) < 1:
+					await self.error(sender, "specify an id")
+					return
+
+				if len(args) < 2:
+					await self.error(sender, "specify a message")
+					return
+
+				id = int(args[0])
+				target = await self.fetch_user(id)
+				if target == None:
+					return
+
+				await target.send(await self.ai_chat(target, args[1]))
+		else:
 			await message.channel.send(await self.ai_chat(sender, message.content))
 
 	def save_data(self):
@@ -95,4 +199,4 @@ class Bot:
 		async def on_message(message):
 			await self.handle_message(message)
 
-		self.client.run(profile["token"])
+		self.client.run(profile["token"], log_handler=None)
