@@ -111,7 +111,7 @@ class Bot:
 				else:
 					await self.error(sender, "wrong password")
 			elif sender.name not in self.sessions.keys():
-				await self.error(sender, "you are not logged in. please use !login <password> to login.")
+				await self.error(sender, "you are not logged in. please use !login <pin> to login.")
 				return
 
 			if cmd == "logout":
@@ -168,6 +168,8 @@ class Bot:
 					return
 
 				await target.send(await self.ai_chat(target, args[1]))
+		elif sender.name in self.sessions.keys():
+			await self.broadcast("[chat] " + sender.name + ": " + message.content, sender.name)
 		else:
 			await message.channel.send(await self.ai_chat(sender, message.content))
 
