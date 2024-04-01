@@ -81,6 +81,9 @@ class Bot:
 			if self.client.user.mentioned_in(message) and not sender.bot:
 				msg = re.sub(r'<@!*&*[0-9]+>', '', message.content).strip()
 
+				if msg == '':
+					msg = self.client.user.display_name
+
 				text = await self.ai_chat(sender, msg)
 				await self.send_bot_guild_message(message.guild, message.channel, str(sender.mention) + " " + text)
 			return
