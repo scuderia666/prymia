@@ -85,7 +85,18 @@ class Bot:
 					msg = self.client.user.display_name
 
 				text = await self.ai_chat(sender, msg)
-				await self.send_bot_guild_message(message.guild, message.channel, str(sender.mention) + " " + text)
+
+				array = text.split("\n")
+
+				index = 0
+
+				for line in array:
+					if line == "":
+						continue
+					if index == 0:
+						line = str(sender.mention) + " " + line
+					await self.send_bot_guild_message(message.guild, message.channel, line)
+					index += 1
 			return
 
 		if message.content[:1] == "!":
@@ -174,7 +185,14 @@ class Bot:
 		elif sender.name in self.sessions.keys():
 			await self.broadcast("[chat] " + sender.name + ": " + message.content, sender.name)
 		else:
-			await message.channel.send(await self.ai_chat(sender, message.content))
+			text = await self.ai_chat(sender, message.content)
+
+			array = text.split("\n")
+
+			for line in array:
+				if line == "":
+					continue
+				await message.channel.send(line)
 
 	def save_data(self):
 			with open("data/" + self.name + ".yml", 'w') as fp:
