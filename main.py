@@ -26,7 +26,7 @@ def shutdown(loop):
 async def main():
 	load_profiles()
 
-	loop = asyncio.get_running_loop()
+	loop = asyncio.get_event_loop()
 
 	for name, data in profiles.items():
 		bots[name] = Bot()
@@ -37,10 +37,10 @@ async def main():
 	except KeyboardInterrupt:
 		pass
 	finally:
-		for name, bot in bots.items():
-			bot.save_data()
+		print("closing bots...")
 
-		loop.stop()
+		for name, bot in bots.items():
+			await bot.close()
 
 if __name__ == "__main__":
     asyncio.run(main())

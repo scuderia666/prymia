@@ -198,12 +198,14 @@ class Bot:
 			with open("data/" + self.name + ".yml", 'w') as fp:
 				OmegaConf.save(config=self.data, f=fp.name)
 
+	async def close(self):
+		self.save_data()
+		await self.client.close()
+
 	async def run(self, name, profile):
 		self.name = name
 		self.client = discord.Client()
 		self.pin = random.randint(999, 9999)
-
-		print("starting " + self.name + " with pin " + str(self.pin))
 
 		self.character_id = profile["character_id"]
 
@@ -217,10 +219,10 @@ class Bot:
 
 		@self.client.event
 		async def on_ready():
-			print(self.name + " has started")
+			print(self.name + " has started with pin " + str(self.pin))
 
 		@self.client.event
 		async def on_message(message):
 			await self.handle_message(message)
 
-		self.client.run(profile["token"], log_handler=None)
+		await self.client.start(profile["token"])
