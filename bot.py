@@ -100,13 +100,19 @@ class Bot:
 			return
 
 		if message.content[:1] == "!":
-			content = message.content[1:].split(None, 1)
-			cmd = content[0]
+			body = message.content[1:].split(None, 1)
 
+			if body == "":
+				return
+
+			cmd = body[0]
+
+			content = ""
 			args = []
 
-			if len(content) == 2:
-				args = content[1].split()
+			if len(body) == 2:
+				content = body[1]
+				args = content.split()
 
 			if cmd == "login":
 				if sender.name in self.sessions.keys():
@@ -152,6 +158,9 @@ class Bot:
 				await self.broadcast("[system] <" + sender.name + "> friend request has been successfully sent to " + target.name)
 
 			if cmd == "msg":
+				if content != "":
+					args = content.split(None, 1)
+
 				if len(args) < 1:
 					await self.error(sender, "specify an id")
 					return
@@ -165,9 +174,12 @@ class Bot:
 				if target == None:
 					return
 
-				await target.send(content[1])
+				await target.send(args[1])
 
 			if cmd == "say":
+				if content != "":
+					args = content.split(None, 1)
+				
 				if len(args) < 1:
 					await self.error(sender, "specify an id")
 					return
@@ -181,7 +193,7 @@ class Bot:
 				if target == None:
 					return
 
-				await target.send(await self.ai_chat(target, content[1]))
+				await target.send(await self.ai_chat(target, args[1]))
 		elif sender.name in self.sessions.keys():
 			await self.broadcast("[chat] " + sender.name + ": " + message.content, sender.name)
 		else:
