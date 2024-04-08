@@ -165,7 +165,7 @@ class Bot:
 				if target == None:
 					return
 
-				await target.send(args[1])
+				await target.send(content[1])
 
 			if cmd == "say":
 				if len(args) < 1:
@@ -181,7 +181,7 @@ class Bot:
 				if target == None:
 					return
 
-				await target.send(await self.ai_chat(target, args[1]))
+				await target.send(await self.ai_chat(target, content[1]))
 		elif sender.name in self.sessions.keys():
 			await self.broadcast("[chat] " + sender.name + ": " + message.content, sender.name)
 		else:
