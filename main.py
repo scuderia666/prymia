@@ -1,6 +1,8 @@
 import os
 import signal
 import asyncio
+import setproctitle
+import psutil
 
 from bot import Bot
 from omegaconf import OmegaConf
@@ -23,6 +25,12 @@ def shutdown(loop):
 	for task in asyncio.Task.all_tasks():
 		task.cancel()
 
+def is_process_running(name):
+	for process in psutil.process_iter(['name']):
+		if process.info['name'] == name:
+			return True
+	return False
+
 async def main():
 	load_profiles()
 
@@ -43,4 +51,8 @@ async def main():
 			await bot.close()
 
 if __name__ == "__main__":
-    asyncio.run(main())
+	if is_process_running('prymia'):
+		print("already running")
+	else:
+		setproctitle.setproctitle('prymia')
+		asyncio.run(main())
