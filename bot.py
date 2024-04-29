@@ -14,7 +14,7 @@ class Bot:
 		self.sessions = {}
 		self.chats = {}
 
-	async def send_bot_guild_message(self, guild, channel, message):
+	async def send_guild_message(self, guild, channel, message):
 		try:
 			await channel.send(message)
 		except discord.errors.Forbidden:
@@ -79,6 +79,8 @@ class Bot:
 
 		if not message.channel.type is discord.ChannelType.private:
 			if self.client.user.mentioned_in(message) and not sender.bot:
+				await asyncio.sleep(1)
+
 				msg = re.sub(r'<@!*&*[0-9]+>', '', message.content).strip()
 
 				if msg == '':
@@ -93,9 +95,11 @@ class Bot:
 				for line in array:
 					if line == "":
 						continue
+					await asyncio.sleep(2)
 					if index == 0:
-						line = str(sender.mention) + " " + line
-					await self.send_bot_guild_message(message.guild, message.channel, line)
+						await message.reply(line)
+					else:
+						await self.send_guild_message(message.guild, message.channel, line)
 					index += 1
 			return
 
@@ -194,9 +198,36 @@ class Bot:
 					return
 
 				await target.send(await self.ai_chat(target, args[1]))
+
+			if cmd == "chmsg":
+				if content != "":
+					args = content.split(None, 1)
+
+				if len(args) < 1:
+					await self.error(sender, "specify a server id")
+					return
+
+				if len(args) < 2:
+					await self.error(sender, "specify a channel id")
+					return
+
+				if len(args) < 3:
+					await self.error(sender, "specify message")
+					return
+
+				guild_id = int(args[0])
+				channel_id = int(args[1])
+				message = args[2]
+				
+				guild = client.get_guild(guild_id)
+				channel = guild.get_channel(channel_id)
+
+				await self.send_guild_message(guild, channel, message)
 		elif sender.name in self.sessions.keys():
 			await self.broadcast("[chat] " + sender.name + ": " + message.content, sender.name)
 		else:
+			await asyncio.sleep(1)
+
 			text = await self.ai_chat(sender, message.content)
 
 			array = text.split("\n")
@@ -204,6 +235,7 @@ class Bot:
 			for line in array:
 				if line == "":
 					continue
+				await asyncio.sleep(2)
 				await message.channel.send(line)
 
 	def save_data(self):
