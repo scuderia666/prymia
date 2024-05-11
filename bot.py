@@ -3,6 +3,9 @@ import re
 import random
 import asyncio
 from omegaconf import OmegaConf
+import logging
+
+logging.basicConfig(level=logging.INFO)
 
 import discord
 from PyCharacterAI import Client
@@ -78,7 +81,7 @@ class Bot:
 			return
 
 		if not message.channel.type is discord.ChannelType.private:
-			if self.client.user.mentioned_in(message) and not sender.bot:
+			if self.client.user.mentioned_in(message) and not "@everyone" in message.content and not "@here" in message.content and not sender.bot:
 				await asyncio.sleep(1)
 
 				msg = re.sub(r'<@!*&*[0-9]+>', '', message.content).strip()
@@ -201,7 +204,7 @@ class Bot:
 
 			if cmd == "chmsg":
 				if content != "":
-					args = content.split(None, 1)
+					args = content.split(None, 2)
 
 				if len(args) < 1:
 					await self.error(sender, "specify a server id")
@@ -219,7 +222,7 @@ class Bot:
 				channel_id = int(args[1])
 				message = args[2]
 				
-				guild = client.get_guild(guild_id)
+				guild = self.client.get_guild(guild_id)
 				channel = guild.get_channel(channel_id)
 
 				await self.send_guild_message(guild, channel, message)
