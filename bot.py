@@ -79,6 +79,10 @@ class Bot:
 
 		if sender.bot:
 			return
+		
+		# ghost alitura
+		if str(sender.id) == "582694915733979149":
+			return
 
 		if not message.channel.type is discord.ChannelType.private:
 			if self.client.user.mentioned_in(message) and not "@everyone" in message.content and not "@here" in message.content and not sender.bot:
@@ -255,9 +259,12 @@ class Bot:
 		self.pin = random.randint(999, 9999)
 
 		self.character_id = profile["character_id"]
+		
+		token = os.getenv('CAI_TOKEN')
+		print("cai token: " + token)
 
 		self.cai_client = Client()
-		await self.cai_client.authenticate_with_token(os.getenv('CAI_TOKEN'))
+		await self.cai_client.authenticate_with_token(token)
 
 		if not os.path.exists("data/" + self.name + ".yml"):
 			self.save_data()
