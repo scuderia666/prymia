@@ -31,26 +31,27 @@ class Bot:
 		if sender.name not in self.data.keys():
 			self.data[sender.name] = {}
 
-		if "history_id" not in self.data[sender.name].keys():
-			chat = await self.cai_client.create_chat(self.character_id)
-			self.data[sender.name]["history_id"] = chat.history_id
+		if "chat_id" not in self.data[sender.name].keys():
+			chat, greeting_turn = await self.cai_client.chat.create_chat(self.character_id, False)
+			self.data[sender.name]["chat_id"] = chat.chat_id
 			self.chats[sender.name] = chat
 
 		if sender.name not in self.chats.keys():
-			chat = await self.cai_client.continue_chat(self.data[sender.name]["history_id"])
+			chat = await self.cai_client.chat.fetch_chat(self.data[sender.name]["chat_id"])
 			self.chats[sender.name] = chat
 
-		answer = await self.chats[sender.name].send_message(message)
+		request = await self.cai_client.chat.send_message(self.character_id, self.chats[sender.name].chat_id, message)
+		answer = request.get_primary_candidate()
 
 		answer2 = None
 
-		if answer.text == None:
-			message_id = answer.uuid
-			while answer2 == None:
-				new_message = await self.chats[sender.name].another_response(message_id)
-				answer2 = new_message.text
+		if answer.is_filtered == True:
+			message_id = answer.turn_id
+			while answer2.is_filtered == False:
+				new_request = await self.cai_client.chat.another_response(self.character_id, self.chats[sender.name].chat_id, message_id)
+				answer2 = new_request.get_primary_candidate()
 			else:
-				return answer2
+				return answer2.text
 		return answer.text
 
 	async def fetch_user(self, id):
@@ -102,7 +103,9 @@ class Bot:
 				for line in array:
 					if line == "":
 						continue
-					await asyncio.sleep(2)
+					async with message.channel.typing():
+					#await message.channel.trigger_typing()
+						await asyncio.sleep(2)
 					if index == 0:
 						await message.reply(line)
 					else:
@@ -264,7 +267,10 @@ class Bot:
 		print("cai token: " + token)
 
 		self.cai_client = Client()
-		await self.cai_client.authenticate_with_token(token)
+		await self.cai_client.authenticate(token)
+
+		me = await self.cai_client.account.fetch_me()
+		print(f"Authenticated as @{me.username}")
 
 		if not os.path.exists("data/" + self.name + ".yml"):
 			self.save_data()
