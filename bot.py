@@ -32,7 +32,7 @@ class Bot:
 			self.data[sender.name] = {}
 
 		if "chat_id" not in self.data[sender.name].keys():
-			chat, greeting_turn = await self.cai_client.chat.create_chat(self.character_id, False)
+			chat, _ = await self.cai_client.chat.create_chat(self.character_id, False)
 			self.data[sender.name]["chat_id"] = chat.chat_id
 			self.chats[sender.name] = chat
 
@@ -80,15 +80,13 @@ class Bot:
 
 		if sender.bot:
 			return
-		
+
 		# ghost alitura
 		if str(sender.id) == "582694915733979149":
 			return
 
 		if not message.channel.type is discord.ChannelType.private:
 			if self.client.user.mentioned_in(message) and not "@everyone" in message.content and not "@here" in message.content and not sender.bot:
-				await asyncio.sleep(1)
-
 				msg = re.sub(r'<@!*&*[0-9]+>', '', message.content).strip()
 
 				if msg == '':
@@ -104,7 +102,6 @@ class Bot:
 					if line == "":
 						continue
 					async with message.channel.typing():
-					#await message.channel.trigger_typing()
 						await asyncio.sleep(2)
 					if index == 0:
 						await message.reply(line)
@@ -236,8 +233,6 @@ class Bot:
 		elif sender.name in self.sessions.keys():
 			await self.broadcast("[chat] " + sender.name + ": " + message.content, sender.name)
 		else:
-			await asyncio.sleep(1)
-
 			text = await self.ai_chat(sender, message.content)
 
 			array = text.split("\n")
@@ -245,7 +240,8 @@ class Bot:
 			for line in array:
 				if line == "":
 					continue
-				await asyncio.sleep(2)
+				async with message.channel.typing():
+					await asyncio.sleep(2)
 				await message.channel.send(line)
 
 	def save_data(self):
